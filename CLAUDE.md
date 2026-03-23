@@ -23,11 +23,12 @@
 - エラーハンドリングは適切に行い、エラーをラップして文脈を付与すること
 - シンプルで読みやすいコードを優先し、過度な抽象化を避けること
 
-### フロントエンド（TypeScript / React）ベストプラクティス
+### フロントエンド（TypeScript / Vite）ベストプラクティス
 
-- **データフェッチ**: SWR を使用する（`useEffect` + `useState` でのフェッチは禁止）
-- **useEffect の使用制限**: `useEffect` は DOM 操作・イベントリスナー・外部ライブラリの初期化など、真の副作用にのみ使用する
-- **コンポーネント設計**: インタラクティブ性が必要なコンポーネントに `"use client"` を付ける
+- **フレームワークなし**: React は使用しない。プレーンな TypeScript で実装する
+- **ビルドツール**: Vite を使用する
+- **Canvas 操作**: 命令的に直接操作する
+- **データフェッチ**: `fetch` + `AbortController` を使用する（進行中リクエストのキャンセルに対応）
 
 ## 開発ワークフロー
 
@@ -87,7 +88,7 @@ git checkout -b issues/番号_ブランチ名
 | ディレクトリ | 役割 | 技術スタック |
 |-------------|------|------------|
 | `backend/` | APIサーバー | Go |
-| `frontend/` | フロント | TypeScript / React |
+| `frontend/` | フロント | TypeScript / Vite |
 
 ### データフロー
 
@@ -98,7 +99,11 @@ git checkout -b issues/番号_ブランチ名
 
 ### 開発環境の起動
 
-リポジトリルートの `dev.sh` で Backend と Frontend を一括起動する（実装後に追記）。
+リポジトリルートの `dev.sh` で Backend と Frontend を一括起動する。
+
+```bash
+./dev.sh
+```
 
 - Backend: port 8080
 - Frontend: port 3000
