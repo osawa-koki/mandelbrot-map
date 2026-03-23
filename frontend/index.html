@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mandelbrot Map</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #000;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+      }
+      #app {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+      canvas {
+        display: block;
+        cursor: grab;
+      }
+      canvas.grabbing {
+        cursor: grabbing;
+      }
+      #controls {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+      }
+      #controls select,
+      #controls input {
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      #controls label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 11px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="canvas"></canvas>
+      <div id="controls">
+        <label>カラースキーム</label>
+        <select id="colorScheme">
+          <option value="classic">Classic</option>
+          <option value="fire">Fire</option>
+          <option value="ocean">Ocean</option>
+        </select>
+        <label>最大反復回数</label>
+        <input id="maxIter" type="number" value="256" min="32" max="2048" step="32" />
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
