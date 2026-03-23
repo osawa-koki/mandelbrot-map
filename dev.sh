@@ -29,6 +29,15 @@ kill_port() {
 kill_port 8080
 kill_port 3000
 
+# 依存パッケージをインストールする
+echo "Go パッケージをインストール中..."
+cd "$ROOT_DIR/backend"
+go mod download
+
+echo "npm パッケージをインストール中..."
+cd "$ROOT_DIR/frontend"
+npm install --silent
+
 echo "バックエンドを起動中 (port 8080)..."
 cd "$ROOT_DIR/backend"
 go run main.go &
