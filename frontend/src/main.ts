@@ -1,10 +1,12 @@
 import { Viewport } from "./viewport";
 import { TileManager } from "./tileManager";
+import { loadFromUrl, saveToUrl, DEFAULT_STATE } from "./params";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 const colorSchemeEl = document.getElementById("colorScheme") as HTMLSelectElement;
 const maxIterEl = document.getElementById("maxIter") as HTMLInputElement;
+const resetBtn = document.getElementById("resetBtn") as HTMLButtonElement;
 
 const viewport = new Viewport();
 const tileManager = new TileManager();
@@ -20,6 +22,17 @@ function resize() {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   tileManager.render(ctx, viewport, canvas.width, canvas.height, render);
+}
+
+// ビューポートの現在状態を URL に保存する
+function syncUrl() {
+  saveToUrl({
+    cx: viewport.centerX,
+    cy: viewport.centerY,
+    scale: viewport.scale,
+    colorScheme: colorSchemeEl.value,
+    maxIter: parseInt(maxIterEl.value, 10),
+  });
 }
 
 // ---- マウス操作 ----
@@ -41,6 +54,7 @@ window.addEventListener("mousemove", (e) => {
   lastX = e.clientX;
   lastY = e.clientY;
   render();
+  syncUrl();
 });
 
 window.addEventListener("mouseup", () => {
@@ -53,6 +67,7 @@ canvas.addEventListener("wheel", (e) => {
   const factor = e.deltaY < 0 ? 0.8 : 1.25;
   viewport.zoom(factor, e.clientX, e.clientY, canvas.width, canvas.height);
   render();
+  syncUrl();
 }, { passive: false });
 
 // ---- タッチ操作 ----
@@ -91,6 +106,7 @@ canvas.addEventListener("touchmove", (e) => {
 
   lastTouches = e.touches;
   render();
+  syncUrl();
 }, { passive: false });
 
 canvas.addEventListener("touchend", () => {
@@ -102,6 +118,7 @@ canvas.addEventListener("touchend", () => {
 colorSchemeEl.addEventListener("change", () => {
   tileManager.setColorScheme(colorSchemeEl.value);
   render();
+  syncUrl();
 });
 
 maxIterEl.addEventListener("change", () => {
@@ -109,10 +126,39 @@ maxIterEl.addEventListener("change", () => {
   if (!isNaN(v) && v > 0) {
     tileManager.setMaxIter(v);
     render();
+    syncUrl();
   }
 });
 
-// ---- 初期化 ----
+// リセットボタン: 初期状態に戻す
+resetBtn.addEventListener("click", () => {
+  viewport.centerX = DEFAULT_STATE.cx;
+  viewport.centerY = DEFAULT_STATE.cy;
+  viewport.scale = DEFAULT_STATE.scale;
+
+  colorSchemeEl.value = DEFAULT_STATE.colorScheme;
+  maxIterEl.value = DEFAULT_STATE.maxIter.toString();
+
+  tileManager.setColorScheme(DEFAULT_STATE.colorScheme);
+  tileManager.setMaxIter(DEFAULT_STATE.maxIter);
+
+  render();
+  syncUrl();
+});
+
+// ---- 初期化: URL パラメータから状態を復元 ----
+
+const initialState = loadFromUrl();
+viewport.centerX = initialState.cx;
+viewport.centerY = initialState.cy;
+viewport.scale = initialState.scale;
+
+colorSchemeEl.value = initialState.colorScheme;
+maxIterEl.value = initialState.maxIter.toString();
+
+tileManager.setColorScheme(initialState.colorScheme);
+tileManager.setMaxIter(initialState.maxIter);
 
 window.addEventListener("resize", resize);
 resize();
+syncUrl();
