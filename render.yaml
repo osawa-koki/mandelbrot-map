@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: mandelbrot-map
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: GIN_MODE
+        value: release
