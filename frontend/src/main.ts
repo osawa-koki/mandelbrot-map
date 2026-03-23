@@ -18,10 +18,36 @@ function resize() {
   render();
 }
 
+// ファビコンをキャンバスの中央部分から生成して更新する
+const faviconCanvas = document.createElement("canvas");
+faviconCanvas.width = 32;
+faviconCanvas.height = 32;
+const faviconCtx = faviconCanvas.getContext("2d")!;
+const faviconEl = document.getElementById("favicon") as HTMLLinkElement;
+
+let faviconTimer: ReturnType<typeof setTimeout> | null = null;
+
+function updateFavicon() {
+  if (faviconTimer !== null) return;
+  faviconTimer = setTimeout(() => {
+    faviconTimer = null;
+    // キャンバス中央の正方形領域を 32x32 に縮小してファビコンに設定する
+    const size = Math.min(canvas.width, canvas.height);
+    const sx = (canvas.width - size) / 2;
+    const sy = (canvas.height - size) / 2;
+    faviconCtx.drawImage(canvas, sx, sy, size, size, 0, 0, 32, 32);
+    faviconEl.href = faviconCanvas.toDataURL();
+  }, 500);
+}
+
 // タイルを描画する
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  tileManager.render(ctx, viewport, canvas.width, canvas.height, render);
+  tileManager.render(ctx, viewport, canvas.width, canvas.height, () => {
+    render();
+    updateFavicon();
+  });
+  updateFavicon();
 }
 
 // ビューポートの現在状態を URL に保存する
