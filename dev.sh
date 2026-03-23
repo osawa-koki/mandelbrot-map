@@ -14,6 +14,21 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# 指定ポートで動作中のプロセスを kill する
+kill_port() {
+  local port=$1
+  local pid
+  pid=$(lsof -ti :"$port" 2>/dev/null || true)
+  if [ -n "$pid" ]; then
+    echo "port $port を使用中のプロセス (PID: $pid) を停止します..."
+    kill "$pid" 2>/dev/null || true
+    sleep 1
+  fi
+}
+
+kill_port 8080
+kill_port 3000
+
 echo "バックエンドを起動中 (port 8080)..."
 cd "$ROOT_DIR/backend"
 go run main.go &
