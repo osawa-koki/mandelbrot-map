@@ -99,7 +99,11 @@ git checkout -b issues/番号_ブランチ名
 
 ### 開発環境の起動
 
-リポジトリルートの `dev.sh` で Backend と Frontend を一括起動する（実装後に追記）。
+リポジトリルートの `dev.sh` で Backend と Frontend を一括起動する。
+
+```bash
+./dev.sh
+```
 
 - Backend: port 8080
 - Frontend: port 3000
