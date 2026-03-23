@@ -20,10 +20,12 @@ func newTestRouter() *gin.Engine {
 	return r
 }
 
-func TestTileHandler_DefaultParams(t *testing.T) {
+const fullQuery = "/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=256&height=256&max_iter=256&color_scheme=classic"
+
+func TestTileHandler_AllParams(t *testing.T) {
 	r := newTestRouter()
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tile", nil)
+	req := httptest.NewRequest(http.MethodGet, fullQuery, nil)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -38,7 +40,7 @@ func TestTileHandler_DefaultParams(t *testing.T) {
 	}
 }
 
-func TestTileHandler_CustomParams(t *testing.T) {
+func TestTileHandler_CustomSize(t *testing.T) {
 	r := newTestRouter()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet,
@@ -67,7 +69,7 @@ func TestTileHandler_AllColorSchemes(t *testing.T) {
 	for _, scheme := range schemes {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet,
-			"/api/tile?width=16&height=16&color_scheme="+scheme,
+			"/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=16&height=16&max_iter=64&color_scheme="+scheme,
 			nil,
 		)
 		r.ServeHTTP(w, req)
@@ -77,21 +79,37 @@ func TestTileHandler_AllColorSchemes(t *testing.T) {
 	}
 }
 
-func TestTileHandler_InvalidParams(t *testing.T) {
+func TestTileHandler_MissingParams(t *testing.T) {
 	r := newTestRouter()
-	cases := []struct {
-		query string
-	}{
-		{"/api/tile?x_min=abc"},
-		{"/api/tile?width=notanumber"},
-		{"/api/tile?max_iter=xyz"},
+	// Required params: x_min, x_max, y_min, y_max, width, height, max_iter, color_scheme
+	cases := []string{
+		"/api/tile",
+		"/api/tile?x_min=-2.5",
+		"/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=64&height=64&max_iter=64",
 	}
-	for _, tc := range cases {
+	for _, query := range cases {
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, tc.query, nil)
+		req := httptest.NewRequest(http.MethodGet, query, nil)
 		r.ServeHTTP(w, req)
 		if w.Code != http.StatusBadRequest {
-			t.Errorf("query=%q: status = %d, want 400", tc.query, w.Code)
+			t.Errorf("query=%q: status = %d, want 400", query, w.Code)
+		}
+	}
+}
+
+func TestTileHandler_InvalidParams(t *testing.T) {
+	r := newTestRouter()
+	cases := []string{
+		"/api/tile?x_min=abc&x_max=1.0&y_min=-1.25&y_max=1.25&width=64&height=64&max_iter=64&color_scheme=classic",
+		"/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=notanumber&height=64&max_iter=64&color_scheme=classic",
+		"/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=64&height=64&max_iter=xyz&color_scheme=classic",
+	}
+	for _, query := range cases {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, query, nil)
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("query=%q: status = %d, want 400", query, w.Code)
 		}
 	}
 }
@@ -99,7 +117,7 @@ func TestTileHandler_InvalidParams(t *testing.T) {
 func TestTileHandler_CacheHeader(t *testing.T) {
 	r := newTestRouter()
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/tile", nil)
+	req := httptest.NewRequest(http.MethodGet, fullQuery, nil)
 	r.ServeHTTP(w, req)
 
 	if cc := w.Header().Get("Cache-Control"); cc == "" {

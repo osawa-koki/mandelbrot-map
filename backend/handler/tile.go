@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"fmt"
 	"image/png"
 	"net/http"
 	"strconv"
@@ -10,14 +11,7 @@ import (
 	"github.com/osawa-koki/mandelbrot-map/backend/mandelbrot"
 )
 
-const (
-	defaultMaxIter    = 256
-	defaultWidth      = 256
-	defaultHeight     = 256
-	defaultColorScheme = "classic"
-)
-
-// TileHandler returns a Gin handler that renders a Mandelbrot tile as PNG.
+// TileHandler はマンデルブロ集合タイルを PNG で返す Gin ハンドラーを返す。
 func TileHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p, err := parseTileParams(c)
@@ -40,36 +34,39 @@ func TileHandler() gin.HandlerFunc {
 }
 
 func parseTileParams(c *gin.Context) (mandelbrot.Params, error) {
-	xMin, err := parseFloat(c, "x_min", -2.5)
+	xMin, err := requireFloat(c, "x_min")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	xMax, err := parseFloat(c, "x_max", 1.0)
+	xMax, err := requireFloat(c, "x_max")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	yMin, err := parseFloat(c, "y_min", -1.25)
+	yMin, err := requireFloat(c, "y_min")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	yMax, err := parseFloat(c, "y_max", 1.25)
+	yMax, err := requireFloat(c, "y_max")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	width, err := parseInt(c, "width", defaultWidth)
+	width, err := requireInt(c, "width")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	height, err := parseInt(c, "height", defaultHeight)
+	height, err := requireInt(c, "height")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
-	maxIter, err := parseInt(c, "max_iter", defaultMaxIter)
+	maxIter, err := requireInt(c, "max_iter")
 	if err != nil {
 		return mandelbrot.Params{}, err
 	}
 
-	scheme := c.DefaultQuery("color_scheme", defaultColorScheme)
+	scheme, err := requireString(c, "color_scheme")
+	if err != nil {
+		return mandelbrot.Params{}, err
+	}
 
 	return mandelbrot.Params{
 		XMin:        xMin,
@@ -83,22 +80,26 @@ func parseTileParams(c *gin.Context) (mandelbrot.Params, error) {
 	}, nil
 }
 
-func parseFloat(c *gin.Context, key string, def float64) (float64, error) {
+func requireFloat(c *gin.Context, key string) (float64, error) {
 	s := c.Query(key)
 	if s == "" {
-		return def, nil
+		return 0, fmt.Errorf("missing required parameter: %s", key)
 	}
 	return strconv.ParseFloat(s, 64)
 }
 
-func parseInt(c *gin.Context, key string, def int) (int, error) {
+func requireInt(c *gin.Context, key string) (int, error) {
 	s := c.Query(key)
 	if s == "" {
-		return def, nil
+		return 0, fmt.Errorf("missing required parameter: %s", key)
 	}
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		return 0, err
+	return strconv.Atoi(s)
+}
+
+func requireString(c *gin.Context, key string) (string, error) {
+	s := c.Query(key)
+	if s == "" {
+		return "", fmt.Errorf("missing required parameter: %s", key)
 	}
-	return v, nil
+	return s, nil
 }

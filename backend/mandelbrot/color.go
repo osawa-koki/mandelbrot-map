@@ -5,16 +5,16 @@ import (
 	"math"
 )
 
-// classicPalette maps t in [0,1) to a blue-white-black gradient.
+// classicPalette は t∈[0,1) を青〜白〜黒のグラデーションにマップする。
 func classicPalette(t float64) color.NRGBA {
-	// Smooth band coloring
+	// スムーズバンドカラーリング
 	r := uint8(9 * (1 - t) * t * t * t * 255)
 	g := uint8(15 * (1 - t) * (1 - t) * t * t * 255)
 	b := uint8(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255)
 	return color.NRGBA{r, g, b, 255}
 }
 
-// firePalette maps t in [0,1) to a black-red-orange-yellow-white gradient.
+// firePalette は t∈[0,1) を黒→赤→オレンジ→黄→白のグラデーションにマップする。
 func firePalette(t float64) color.NRGBA {
 	r := clampUint8(math.Pow(t, 0.5) * 255 * 2)
 	g := clampUint8(math.Pow(t, 1.5) * 255 * 2)
@@ -22,7 +22,7 @@ func firePalette(t float64) color.NRGBA {
 	return color.NRGBA{r, g, b, 255}
 }
 
-// oceanPalette maps t in [0,1) to a deep-blue to cyan gradient.
+// oceanPalette は t∈[0,1) を深海ブルー〜シアンのグラデーションにマップする。
 func oceanPalette(t float64) color.NRGBA {
 	r := clampUint8(t * 30)
 	g := clampUint8(t * 180)

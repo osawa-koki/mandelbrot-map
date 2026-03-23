@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// Params holds the parameters for rendering a Mandelbrot tile.
+// Params はマンデルブロ集合タイルのレンダリングパラメータを保持する。
 type Params struct {
 	XMin, XMax float64
 	YMin, YMax float64
@@ -16,8 +16,8 @@ type Params struct {
 	ColorScheme string
 }
 
-// Render generates a Mandelbrot set image for the given parameters.
-// Rows are computed in parallel using goroutines.
+// Render は指定されたパラメータでマンデルブロ集合の画像を生成する。
+// 各行を goroutine で並列計算する。
 func Render(p Params) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, p.Width, p.Height))
 	palette := buildPalette(p.ColorScheme, p.MaxIter)
@@ -42,10 +42,10 @@ func Render(p Params) *image.NRGBA {
 	return img
 }
 
-// iterate returns the number of iterations before escape, or MaxIter if bounded.
-// Uses smooth coloring via the escape-time algorithm with period-2 bulb/cardioid check.
+// iterate は脱出するまでの反復回数を返す。集合内の点は maxIter を返す。
+// カルジオイドおよびperiod-2バルブの早期終了チェックを行う。
 func iterate(cx, cy float64, maxIter int) int {
-	// Cardioid / period-2 bulb check for early exit
+	// カルジオイド／period-2バルブの早期終了チェック
 	q := (cx-0.25)*(cx-0.25) + cy*cy
 	if q*(q+(cx-0.25)) <= 0.25*cy*cy {
 		return maxIter
@@ -66,11 +66,11 @@ func iterate(cx, cy float64, maxIter int) int {
 	return maxIter
 }
 
-// buildPalette creates a slice of maxIter+1 colors.
-// Index maxIter represents the "inside" color (black).
+// buildPalette は maxIter+1 個のカラーパレットを生成する。
+// インデックス maxIter は集合内（黒）を表す。
 func buildPalette(scheme string, maxIter int) []color.NRGBA {
 	palette := make([]color.NRGBA, maxIter+1)
-	palette[maxIter] = color.NRGBA{0, 0, 0, 255} // inside = black
+	palette[maxIter] = color.NRGBA{0, 0, 0, 255} // 集合内 = 黒
 
 	var fn func(t float64) color.NRGBA
 	switch scheme {
