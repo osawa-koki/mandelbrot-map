@@ -51,6 +51,19 @@
         font-size: 11px;
         font-family: monospace;
       }
+      #resetBtn {
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      #resetBtn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
     </style>
   </head>
   <body>
@@ -65,6 +78,7 @@
         </select>
         <label>最大反復回数</label>
         <input id="maxIter" type="number" value="256" min="32" max="2048" step="32" />
+        <button id="resetBtn">初期値に戻す</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
