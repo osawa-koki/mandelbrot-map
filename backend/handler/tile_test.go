@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"image"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
@@ -122,5 +123,95 @@ func TestTileHandler_CacheHeader(t *testing.T) {
 
 	if cc := w.Header().Get("Cache-Control"); cc == "" {
 		t.Error("Cache-Control header is missing")
+	}
+}
+
+// requestTile はテスト用にタイルをリクエストして画像を返す。
+func requestTile(t *testing.T, r *gin.Engine, query string) image.Image {
+	t.Helper()
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, query, nil)
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (query: %s)", w.Code, query)
+	}
+	img, err := png.Decode(bytes.NewReader(w.Body.Bytes()))
+	if err != nil {
+		t.Fatalf("PNG デコード失敗: %v", err)
+	}
+	return img
+}
+
+// TestTileHandler_InsideSetIsBlack は集合内（原点付近）が黒であることを確認する。
+// 原点 (0+0i) はマンデルブロ集合内のため、対応するピクセルは黒 (0,0,0) になる。
+func TestTileHandler_InsideSetIsBlack(t *testing.T) {
+	r := newTestRouter()
+	// 原点が画像中央に来るよう座標を設定
+	// width=101, height=101 として中央ピクセルが (cx=0, cy=0) に対応する
+	img := requestTile(t, r,
+		"/api/tile?x_min=-1&x_max=1&y_min=-1&y_max=1&width=101&height=101&max_iter=256&color_scheme=classic",
+	)
+	cx, cy := 50, 50
+	r8, g8, b8, _ := img.At(cx, cy).RGBA()
+	if r8 != 0 || g8 != 0 || b8 != 0 {
+		t.Errorf("原点ピクセル(%d,%d) = (%d,%d,%d), 集合内なので黒を期待", cx, cy, r8>>8, g8>>8, b8>>8)
+	}
+}
+
+// TestTileHandler_OutsideSetIsColored は集合外（右上遠方）に色が付くことを確認する。
+// (2+2i) はマンデルブロ集合の外側のため、対応するピクセルは黒以外になる。
+func TestTileHandler_OutsideSetIsColored(t *testing.T) {
+	r := newTestRouter()
+	// 画像全体が集合外の領域をリクエスト
+	img := requestTile(t, r,
+		"/api/tile?x_min=1.5&x_max=2.5&y_min=1.5&y_max=2.5&width=16&height=16&max_iter=256&color_scheme=classic",
+	)
+	// この領域は全ピクセルが脱出するはずなので、少なくとも1ピクセルは非黒であることを確認
+	hasColor := false
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r8, g8, b8, _ := img.At(x, y).RGBA()
+			if r8 != 0 || g8 != 0 || b8 != 0 {
+				hasColor = true
+				break
+			}
+		}
+		if hasColor {
+			break
+		}
+	}
+	if !hasColor {
+		t.Error("集合外の領域なのに全ピクセルが黒")
+	}
+}
+
+// TestTileHandler_DifferentRegionsDifferentImages は異なる座標範囲で異なる画像が生成されることを確認する。
+func TestTileHandler_DifferentRegionsDifferentImages(t *testing.T) {
+	r := newTestRouter()
+	img1 := requestTile(t, r,
+		"/api/tile?x_min=-2.5&x_max=1.0&y_min=-1.25&y_max=1.25&width=32&height=32&max_iter=64&color_scheme=classic",
+	)
+	img2 := requestTile(t, r,
+		"/api/tile?x_min=0.0&x_max=0.5&y_min=0.0&y_max=0.5&width=32&height=32&max_iter=64&color_scheme=classic",
+	)
+
+	// 少なくとも1ピクセルが異なることを確認
+	different := false
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 32; x++ {
+			r1, g1, b1, _ := img1.At(x, y).RGBA()
+			r2, g2, b2, _ := img2.At(x, y).RGBA()
+			if r1 != r2 || g1 != g2 || b1 != b2 {
+				different = true
+				break
+			}
+		}
+		if different {
+			break
+		}
+	}
+	if !different {
+		t.Error("異なる座標範囲なのに同一の画像が生成された")
 	}
 }
