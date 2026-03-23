@@ -6,7 +6,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    "noEmit": true
   },
   "include": ["src"]
 }
